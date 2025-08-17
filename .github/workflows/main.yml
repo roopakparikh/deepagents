@@ -16,4 +16,5 @@
           with:
             # Directory containing source code & .spec file (optional requirements.txt).
             path: src
+            spec: deepagents.spec
                   
