@@ -1,0 +1,16 @@
+{
+  "model": {
+    "provider": "anthropic",
+    "name": "claude-sonnet-4-20250514",
+    "max_tokens": 64000
+  },
+  "servers": [
+    {
+      "name": "filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "transport": { "type": "stdio" },
+      "env": { "ROOT": "/absolute/path/you/want" }
+    }
+  ]
+}

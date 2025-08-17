@@ -1,0 +1,16 @@
+{
+  "model": {
+    "provider": "ollama",
+    "name": "qwen3:4b",
+    "base_url": "http://localhost:11434",
+    "max_tokens": 8192
+  },
+  "servers": [
+    {
+      "name": "filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "transport": { "type": "stdio" }
+    }
+  ]
+}

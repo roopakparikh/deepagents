@@ -1,0 +1,18 @@
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "transport": { "type": "stdio" },
+      "env": { "ROOT": "/absolute/path/you/want" }
+    },
+    {
+      "name": "mytool",
+      "command": "/path/to/my_mcp_server",
+      "args": ["--flag", "value"],
+      "transport": { "type": "stdio" },
+      "env": { "FOO": "bar" }
+    }
+  ]
+}
