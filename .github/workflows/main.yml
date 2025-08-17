@@ -1,0 +1,19 @@
+  name: PyInstaller Linux
+  on:
+    release:
+      types:
+        - released                        # When new version of your action is released
+    workflow_dispatch:
+
+  jobs:
+    update-major-version:
+      runs-on: ubuntu-latest
+      steps:
+        - name: PyInstaller Linux
+          # You may pin to the exact commit or the version.
+          # uses: JackMcKew/pyinstaller-action-linux@38639c352a36917eea765f9283bfd1092c28af7b
+          uses: JackMcKew/pyinstaller-action-linux@0.1.4
+          with:
+            # Directory containing source code & .spec file (optional requirements.txt).
+            path: src
+                  
