@@ -17,7 +17,37 @@ a **planning tool**, **sub agents**, access to a **file system**, and a **detail
 pip install deepagents
 ```
 
-## Usage
+## CLI Usage
+
+DeepAgents includes an interactive CLI with file path autocompletion:
+
+```bash
+# Start the interactive CLI
+deepagents-cli
+
+# Or run directly from the repo
+python test_cli.py
+```
+
+**Key CLI Features:**
+- 🤖 Interactive chat with deep agent capabilities
+- 📁 File path autocompletion triggered by `@` symbol
+- 📝 Built-in todo management and file system operations
+- 🔄 Real-time agent state monitoring
+
+**CLI Commands:**
+- `help` - Show available commands
+- `status` - Display current todos and files
+- `clear` - Clear terminal screen
+- `exit`/`quit` - Exit the CLI
+
+**File Path Completion:**
+Type `@` followed by a path and press TAB to autocomplete:
+- `@/home/user/doc<TAB>` - Complete absolute paths
+- `@src/deep<TAB>` - Complete relative paths
+- `@../parent<TAB>` - Complete parent directories
+
+## Programmatic Usage
 
 (To run the example below, will need to `pip install tavily-python`)
 

@@ -9,7 +9,14 @@ dependencies = [
     "langgraph>=0.2.6",
     "langchain-anthropic>=0.1.23",
     "langchain>=0.2.14",
+    "prompt_toolkit>=3.0.47",
+    "langchain-mcp-adapters>=0.1.9",
+    "langchain-community>=0.3.27",
+    "langchain-ollama>=0.3.6",
 ]
+
+[project.scripts]
+deepagents-cli = "deepagents.cli:main"
 
 
 [build-system]
