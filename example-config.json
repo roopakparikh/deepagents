@@ -9,8 +9,7 @@
       "name": "filesystem",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem"],
-      "transport": { "type": "stdio" },
-      "env": { "ROOT": "/absolute/path/you/want" }
+      "transport": { "type": "stdio" }
     }
   ]
 }
