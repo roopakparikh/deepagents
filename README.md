@@ -1,4 +1,5 @@
-[![PyInstaller Linux](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml/badge.svg)](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml)
+
+[![Create Release](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml/badge.svg)](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml)
 
 This code is forked from the  DeepAgents CLI.
 
