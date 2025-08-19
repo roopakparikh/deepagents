@@ -18,7 +18,7 @@
         - name: Install the project
           run: uv sync --locked --all-extras --dev
         - name: Run PyInstaller
-          run: uv run pyinstaller deepagents.spec
+          run: uv run pyinstaller deepagents.spec --noconfirm
         - name: Create release
           uses: actions/create-release@v1
           env:
