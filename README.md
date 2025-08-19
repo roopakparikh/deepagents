@@ -1,3 +1,5 @@
+[![PyInstaller Linux](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml/badge.svg)](https://github.com/roopakparikh/deepagents/actions/workflows/main.yml)
+
 # 🧠🤖Deep Agents
 
 Using an LLM to call tools in a loop is the simplest form of an agent. 
