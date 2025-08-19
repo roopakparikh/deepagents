@@ -1,9 +1,8 @@
-  name: PyInstaller Linux
+  name: Create Release
   on:
-    release:
-      types:
-        - released                        # When new version of your action is released
-    workflow_dispatch:
+    push:
+      tags:
+        - 'v*'
 
   jobs:
     build:
@@ -20,6 +19,7 @@
         - name: Run PyInstaller
           run: uv run pyinstaller deepagents.spec --noconfirm
         - name: Create release
+          id: create_release
           uses: actions/create-release@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,13 +27,13 @@
             tag_name: ${{ github.ref }}
             release_name: ${{ github.ref }}
             body: |
-              Test Relase v1
+              Test Relase ${{ github.ref }}
         - name: Upload Release Asset
           uses: actions/upload-release-asset@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           with:
-            upload_url: ${{ github.event.release.upload_url }}
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
             asset_path: dist/deepagents
             asset_name: deepagents
             asset_content_type: application/octet-stream
