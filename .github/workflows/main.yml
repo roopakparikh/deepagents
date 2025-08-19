@@ -16,7 +16,7 @@
         - name: Set up Python
           run: uv python install
         - name: Install the project
-          run: uv sync --locaked --all-extras --dev
+          run: uv sync --locked --all-extras --dev
         - name: Run PyInstaller
           run: uv run pyinstaller src/deepagents.spec
         - name: Create release
