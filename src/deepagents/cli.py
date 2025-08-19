@@ -156,7 +156,8 @@ def _build_model_from_config(model_cfg: dict):
 
 def create_interactive_session(config_path: Optional[str] = None, root: Optional[str] = None):
     """Create an interactive CLI session with the deep agent."""
-    print("🧠🤖 DeepAgents Interactive CLI")
+    prog = _get_prog_name()
+    print(f"🧠🤖 {prog} Interactive CLI")
     print("=" * 40)
     print("Type your requests below. Use '@' followed by TAB to autocomplete file paths.")
     print("Type 'exit' or 'quit' to end the session.")
@@ -455,14 +456,18 @@ def print_status(state):
 
 def main():
     """Main CLI entry point."""
+    prog = _get_prog_name()
     parser = argparse.ArgumentParser(
-        description="DeepAgents CLI with file path autocompletion",
+        prog=prog,
+        description=f"{prog} with file path autocompletion",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=(
+            f"""
 Examples:
-  deepagents-cli                    # Start interactive session
-  deepagents-cli --help            # Show this help
-        """
+  {prog}                    # Start interactive session
+  {prog} --help            # Show this help
+            """
+        ),
     )
     
     parser.add_argument(
