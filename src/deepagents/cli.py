@@ -504,9 +504,18 @@ Examples:
     )
     
     args = parser.parse_args()
-    
+
+    # Determine config path: prefer explicit --config; otherwise use $HOME/.<prog>/config.json if it exists
+    default_cfg_path = Path.home() / f".{prog}" / "config.json"
+    if args.config_path:
+        selected_cfg = args.config_path
+    elif default_cfg_path.exists():
+        selected_cfg = str(default_cfg_path)
+    else:
+        selected_cfg = None
+
     # Start interactive session
-    create_interactive_session(config_path=args.config_path, root=args.root)
+    create_interactive_session(config_path=selected_cfg, root=args.root)
 
 
 if __name__ == "__main__":
