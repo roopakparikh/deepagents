@@ -13,6 +13,7 @@ dependencies = [
     "langchain-mcp-adapters>=0.1.9",
     "langchain-community>=0.3.27",
     "langchain-ollama>=0.3.6",
+    "pyinstaller>=6.15.0",
 ]
 
 [project.scripts]
