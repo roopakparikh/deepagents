@@ -98,6 +98,39 @@ def _build_session(root: Optional[str] = None) -> PromptSession:
     return PromptSession(completer=AtPathCompleter(cwd=root))
 
 
+def _resolve_abs_path(path_text: str, base_dir: Optional[str]) -> str:
+    """Resolve a user-entered path (possibly relative, with ~ or env vars) to an absolute path.
+
+    If base_dir is provided, relative paths are resolved against it; otherwise against CWD.
+    """
+    expanded = os.path.expandvars(os.path.expanduser(path_text))
+    if os.path.isabs(expanded):
+        return os.path.abspath(expanded)
+    anchor = base_dir or os.getcwd()
+    return os.path.abspath(os.path.join(anchor, expanded))
+
+
+def _expand_at_paths_in_text(text: str, base_dir: Optional[str]):
+    """Replace occurrences of @<path> in text with absolute paths.
+
+    Returns a tuple (new_text, mapping) where mapping is a list of (original, expanded).
+    """
+    import re
+
+    pattern = re.compile(r"@(\S+)")
+    mappings = []
+
+    def repl(match):
+        orig = match.group(0)  # includes '@'
+        path_part = match.group(1)
+        abs_path = _resolve_abs_path(path_part, base_dir)
+        mappings.append((orig, abs_path))
+        return abs_path
+
+    new_text = pattern.sub(repl, text)
+    return new_text, mappings
+
+
 def _load_config(config_path: Optional[str]) -> dict:
     """Load CLI config from a JSON file.
 
@@ -166,7 +199,7 @@ def _build_model_from_config(model_cfg: dict):
                 os.environ[k] = v
 
 
-def create_interactive_session(config_path: Optional[str] = None, root: Optional[str] = None):
+def create_interactive_session(config_path: Optional[str] = None, root: Optional[str] = None, debug: bool = False):
     """Create an interactive CLI session with the deep agent."""
     prog = _get_prog_name()
     print(f"🧠🤖 {prog} Interactive CLI")
@@ -242,6 +275,28 @@ def create_interactive_session(config_path: Optional[str] = None, root: Optional
                 return srv
 
         servers = [_normalize_server_cfg(s) if isinstance(s, dict) else s for s in servers]
+
+        # Debug print of MCP server configs to stderr
+        if debug:
+            try:
+                def _sanitize(entry):
+                    if not isinstance(entry, dict):
+                        return entry
+                    # Only include commonly useful keys
+                    allowed = {"name", "command", "args", "env", "transport", "url", "host", "port", "path"}
+                    out = {k: v for k, v in entry.items() if k in allowed}
+                    # Avoid dumping very large envs; truncate values
+                    if "env" in out and isinstance(out["env"], dict):
+                        out["env"] = {k: (str(v)[:200] + ("…" if len(str(v)) > 200 else "")) for k, v in out["env"].items()}
+                    # Truncate long args
+                    if "args" in out and isinstance(out["args"], list):
+                        out["args"] = [str(a)[:200] + ("…" if len(str(a)) > 200 else "") for a in out["args"]]
+                    return out
+                sanitized = [_sanitize(s) if isinstance(s, dict) else s for s in servers]
+                sys.stderr.write("\n[MCP DEBUG] Servers configuration to be used by client:\n")
+                sys.stderr.write(json.dumps(sanitized, indent=2) + "\n\n")
+            except Exception as _e:
+                sys.stderr.write(f"[MCP DEBUG] Failed to print servers config: {_e}\n")
 
         # Initialize MultiServerMCPClient with maximum compatibility across versions
         mcp_client = None
@@ -344,9 +399,19 @@ def create_interactive_session(config_path: Optional[str] = None, root: Optional
             
             # Process the request with the agent
             print("\n🔄 Processing request...")
-            
+
+            # Expand any @<path> occurrences to absolute paths before passing to tools
+            expanded_input, path_mappings = _expand_at_paths_in_text(user_input, resolved_root)
+            if debug and path_mappings:
+                try:
+                    sys.stderr.write("[MCP DEBUG] Path expansions (original -> absolute):\n")
+                    for orig, abspath in path_mappings:
+                        sys.stderr.write(f"  {orig} -> {abspath}\n")
+                except Exception:
+                    pass
+
             # Add user message to state
-            state["messages"] = [{"role": "user", "content": user_input}]
+            state["messages"] = [{"role": "user", "content": expanded_input}]
             
             # Invoke the agent
             try:
@@ -502,6 +567,12 @@ Examples:
         type=str,
         help="Root directory used for '@' file path autocompletion.",
     )
+    parser.add_argument(
+        "--debug-mcp",
+        dest="debug_mcp",
+        action="store_true",
+        help="Print MCP servers' arguments/configuration to stderr before starting.",
+    )
     
     args = parser.parse_args()
 
@@ -515,7 +586,7 @@ Examples:
         selected_cfg = None
 
     # Start interactive session
-    create_interactive_session(config_path=selected_cfg, root=args.root)
+    create_interactive_session(config_path=selected_cfg, root=args.root, debug=args.debug_mcp)
 
 
 if __name__ == "__main__":
