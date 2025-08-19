@@ -15,6 +15,5 @@
           uses: JackMcKew/pyinstaller-action-linux@0.1.4
           with:
             # Directory containing source code & .spec file (optional requirements.txt).
-            path: src
-            spec: deepagents.spec
+            spec: 'src/deepagents.spec'
                   
