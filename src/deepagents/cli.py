@@ -24,6 +24,18 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 
 
+def _get_prog_name() -> str:
+    """Return the invoked program name (supports symlink renaming).
+
+    Uses sys.argv[0] basename; if empty, falls back to 'deepagents-cli'.
+    """
+    try:
+        base = os.path.basename(sys.argv[0]) or "deepagents-cli"
+        return base
+    except Exception:
+        return "deepagents-cli"
+
+
 class AtPathCompleter(Completer):
     """prompt_toolkit completer that completes filesystem paths when the
     token being completed starts with '@'. The inserted text keeps the '@' prefix.
