@@ -35,7 +35,7 @@ def get_default_model():
             or os.getenv("OLLAMA_BASE_URL")
             or "http://localhost:11434"
         )
-        return ChatOllama(model=model_name, base_url=base_url, format="json")
+        return ChatOllama(model=model_name, base_url=base_url)
 
     # Default to Anthropic
     model_name = os.getenv("DEEPAGENTS_MODEL_NAME", "claude-sonnet-4-20250514")

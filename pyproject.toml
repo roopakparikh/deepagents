@@ -14,6 +14,10 @@ dependencies = [
     "langchain-community>=0.3.27",
     "langchain-ollama>=0.3.6",
     "pyinstaller>=6.15.0",
+    "langgraph-checkpoint-sqlite>=2.0.11",
+    "langchain-openai>=0.3.30",
+    "aiosqlite>=0.20.0",
+    "fastmcp>=2.11.3",
 ]
 
 [project.scripts]
@@ -31,3 +35,10 @@ packages = ["deepagents"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+]

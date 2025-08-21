@@ -1,15 +1,15 @@
 {
   "model": {
     "provider": "ollama",
-    "name": "qwen3:8b",
+    "name": "llama3.1:8b",
     "base_url": "http://localhost:11434",
     "max_tokens": 8192
   },
   "servers": [
     {
-      "name": "filesystem",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "name": "weather",
+      "command": "uv",
+      "args": ["--directory", "/Users/rparikh/personal/deepagents/", "run", "sampleserver.py"],
       "transport": { "type": "stdio" }
     }
   ]
