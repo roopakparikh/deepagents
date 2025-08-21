@@ -1,6 +1,6 @@
 from deepagents.sub_agent import _create_task_tool, SubAgent
 from deepagents.model import get_default_model
-from deepagents.tools import write_todos, write_file, read_file, ls, edit_file
+from deepagents.tools import write_todos, write_file, read_file, ls, edit_file, sleep_tool
 from deepagents.state import DeepAgentState
 from typing import Sequence, Union, Callable, Any, TypeVar, Type, Optional
 from langchain_core.tools import BaseTool
@@ -34,7 +34,7 @@ def create_deep_agent(
     """Create a deep agent.
 
     This agent will by default have access to a tool to write todos (write_todos),
-    and then four file editing tools: write_file, ls, read_file, edit_file.
+    and then four file editing tools: write_file, ls, read_file, edit_file and sleep_tool.
 
     Args:
         tools: The additional tools the agent should have access to.
@@ -50,7 +50,7 @@ def create_deep_agent(
         state_schema: The schema of the deep agent. Should subclass from DeepAgentState
     """
     prompt = instructions + base_prompt
-    built_in_tools = [write_todos, write_file, read_file, ls, edit_file]
+    built_in_tools = [write_todos, write_file, read_file, ls, edit_file, sleep_tool]
     if model is None:
         model = get_default_model()
     state_schema = state_schema or DeepAgentState

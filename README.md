@@ -30,6 +30,61 @@ youragentname
 - `clear` - Clear terminal screen
 - `exit`/`quit` - Exit the CLI
 
+**Debug Options:**
+- `--debug` - Enable comprehensive debug logging for all tools and agent execution
+- `--debug-mcp` - Enable debug logging for MCP tools only
+
+### Debugging Features
+
+The CLI and tools support comprehensive debug logging to help diagnose issues:
+
+```bash
+# Run with debug mode enabled
+./deepagents-cli --debug
+
+# Or set environment variable directly
+DEEPAGENTS_DEBUG=1 ./deepagents-cli
+```
+
+Debug logging provides detailed information about:
+- Tool invocations with inputs and outputs
+- Execution timing for each tool
+- Agent step-by-step execution
+- Error stack traces
+- MCP tool calls and responses
+- Sub-agent creation and invocation
+
+All debug output is sent to stderr, so you can redirect it if needed:
+```bash
+./deepagents-cli --debug 2>debug.log
+```
+
+### Using Debug Utilities in Custom Tools
+
+If you're developing custom tools, you can use the built-in debug utilities:
+
+```python
+from deepagents.debug_utils import debug_tool, log_debug, is_debug_enabled
+
+# Automatically log tool inputs, outputs, timing, and errors
+@debug_tool
+def my_custom_tool(input_data):
+    # Check if debug is enabled before expensive operations
+    if is_debug_enabled():
+        log_debug(f"Processing custom data: {input_data}")
+        
+    # Your tool implementation
+    result = process_data(input_data)
+    
+    # Log important events
+    if is_debug_enabled():
+        log_debug(f"Processed {len(result)} items")
+        
+    return result
+```
+
+The debug utilities will only log when debug mode is enabled via the `--debug` flag or `DEEPAGENTS_DEBUG=1` environment variable.
+
 **File Path Completion:**
 Type `@` followed by a path and press TAB to autocomplete:
 - `@/home/user/doc<TAB>` - Complete absolute paths

@@ -10,11 +10,13 @@ import sys
 import argparse
 import glob
 import json
+import functools
 from typing import Optional
 from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.model import get_default_model
+from deepagents.debug_utils import set_debug, is_debug_enabled, log_debug
 import asyncio
 
 from prompt_toolkit import PromptSession
@@ -205,6 +207,14 @@ def create_interactive_session(
     debug: bool = False,
     recursion_limit: int = 25,
 ):
+    """Create an interactive CLI session with the deep agent.
+    
+    Args:
+        config_path: Path to the config file
+        root: Root directory for file path completion
+        debug: Enable debug mode for all tools and MCP
+        recursion_limit: Maximum recursion limit for LangGraph
+    """
     """Create an interactive CLI session with the deep agent."""
     prog = _get_prog_name()
     print(f"🧠🤖 {prog} Interactive CLI")
@@ -378,13 +388,8 @@ def create_interactive_session(
     # If debug is enabled, wrap MCP tools to trace their calls without altering schemas
     if debug and mcp_tools:
         try:
-            def _truncate(val: str, n: int = 2000) -> str:
-                try:
-                    s = str(val)
-                except Exception:
-                    return "<unprintable>"
-                return s if len(s) <= n else s[:n] + "…"
-
+            from deepagents.debug_utils import debug_tool
+            
             def _wrap_tool(tool):
                 name = getattr(tool, "name", repr(tool))
                 # Preserve original invoke/ainvoke
@@ -392,16 +397,11 @@ def create_interactive_session(
                 original_ainvoke = getattr(tool, "ainvoke", None)
 
                 if callable(original_invoke):
+                    @functools.wraps(original_invoke)
                     def wrapped_invoke(input, *args, **kwargs):
-                        try:
-                            sys.stderr.write(f"[MCP DEBUG] → Tool invoke: {name} with input: {_truncate(input, 300)}\n")
-                        except Exception:
-                            pass
+                        log_debug(f"→ MCP Tool invoke: {name} with input: {input}")
                         result = original_invoke(input, *args, **kwargs)
-                        try:
-                            sys.stderr.write(f"[MCP DEBUG] ← Tool result: {name}: {_truncate(result, 800)}\n")
-                        except Exception:
-                            pass
+                        log_debug(f"← MCP Tool result: {name}: {result}")
                         return result
                     try:
                         setattr(tool, "invoke", wrapped_invoke)
@@ -409,16 +409,11 @@ def create_interactive_session(
                         pass
 
                 if callable(original_ainvoke):
+                    @functools.wraps(original_ainvoke)
                     async def wrapped_ainvoke(input, *args, **kwargs):
-                        try:
-                            sys.stderr.write(f"[MCP DEBUG] → Tool ainvoke: {name} with input: {_truncate(input, 300)}\n")
-                        except Exception:
-                            pass
+                        log_debug(f"→ MCP Tool ainvoke: {name} with input: {input}")
                         result = await original_ainvoke(input, *args, **kwargs)
-                        try:
-                            sys.stderr.write(f"[MCP DEBUG] ← Tool aresult: {name}: {_truncate(result, 800)}\n")
-                        except Exception:
-                            pass
+                        log_debug(f"← MCP Tool aresult: {name}: {result}")
                         return result
                     try:
                         setattr(tool, "ainvoke", wrapped_ainvoke)
@@ -428,12 +423,9 @@ def create_interactive_session(
                 return tool
 
             mcp_tools = [_wrap_tool(t) for t in mcp_tools]
-            try:
-                sys.stderr.write(f"[MCP DEBUG] Wrapped {len(mcp_tools)} MCP tools for call tracing.\n")
-            except Exception:
-                pass
+            log_debug(f"Wrapped {len(mcp_tools)} MCP tools for call tracing.")
         except Exception as _e:
-            sys.stderr.write(f"[MCP DEBUG] Failed to wrap MCP tools for debug: {_e}\n")
+            log_debug(f"Failed to wrap MCP tools for debug: {_e}")
 
     # Create a basic deep agent (user can customize this)
     model = None
@@ -503,11 +495,46 @@ def create_interactive_session(
             try:
                 if debug:
                     try:
-                        sys.stderr.write(f"[DEBUG] Invoking agent with recursion_limit={recursion_limit}\n")
+                        log_debug(f"Invoking agent with recursion_limit={recursion_limit}")
+                        log_debug(f"Initial state: {state}")
                     except Exception:
                         pass
-                # Pass recursion limit to LangGraph to avoid premature termination
-                result = agent.invoke(state, config={"recursion_limit": recursion_limit})
+                
+                # Create config with recursion limit and debug streaming
+                config = {"recursion_limit": recursion_limit}
+                
+                if debug:
+                    # Stream the agent execution to see each step
+                    log_debug("=== Agent Execution Steps ===")
+                    step_count = 0
+                    for step in agent.stream(state, config=config):
+                        step_count += 1
+                        try:
+                            log_debug(f"Step {step_count}: {list(step.keys())}")
+                            for node_name, node_output in step.items():
+                                if hasattr(node_output, 'get') and 'messages' in node_output:
+                                    last_msg = node_output['messages'][-1] if node_output['messages'] else None
+                                    if last_msg:
+                                        msg_type = type(last_msg).__name__
+                                        content_preview = str(last_msg.content)[:100] if hasattr(last_msg, 'content') else str(last_msg)[:100]
+                                        log_debug(f"  {node_name} -> {msg_type}: {content_preview}...")
+                                        if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+                                            log_debug(f"  Tool calls: {[tc.get('name', 'unknown') for tc in last_msg.tool_calls]}")
+                                else:
+                                    log_debug(f"  {node_name} -> {str(node_output)[:100]}...")
+                        except Exception as e:
+                            log_debug(f"Error logging step {step_count}: {e}")
+                        
+                        if step_count >= recursion_limit:
+                            log_debug(f"Reached step limit {recursion_limit}, stopping stream")
+                            break
+                    
+                    # Get final result
+                    result = agent.invoke(state, config=config)
+                    log_debug(f"=== Final result keys: {list(result.keys()) if hasattr(result, 'keys') else 'not dict'} ===")
+                else:
+                    # Pass recursion limit to LangGraph to avoid premature termination
+                    result = agent.invoke(state, config=config)
                 
                 # Update state with result
                 state.update(result)
@@ -664,7 +691,7 @@ Examples:
         "--debug",
         dest="debug_all",
         action="store_true",
-        help="Enable debug for MCP and agent invocation (includes --debug-mcp).",
+        help="Enable debug for all tools, MCP and agent invocation (includes --debug-mcp). Also sets DEEPAGENTS_DEBUG=1.",
     )
     parser.add_argument(
         "--debug-mcp",
@@ -700,6 +727,12 @@ Examples:
 
     # Determine overall debug flag (global OR MCP-specific)
     debug_flag = bool(args.debug_all or args.debug_mcp)
+    
+    # Set debug flag in debug_utils module and environment variable
+    if debug_flag:
+        set_debug(True)
+        os.environ["DEEPAGENTS_DEBUG"] = "1"
+        print("🐛 Debug mode enabled for all tools (DEEPAGENTS_DEBUG=1)")
 
     # Start interactive session
     create_interactive_session(
